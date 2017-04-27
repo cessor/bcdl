@@ -9,8 +9,7 @@ RESERVED_CHARS = "<>:\"/\\|?*[];=%&"
 
 
 def fs_friendly(filename):
-    '''Removes illegal characters from titles, such as
-      Jeremy Blake - Remember Etta?
+    '''Removes illegal characters from titles, such as Questionmarks.
       that prevent writing filenames under windows.
       See: https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
     '''
