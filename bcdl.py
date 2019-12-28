@@ -1,18 +1,18 @@
 import json
 import os
 import re
-import requests
 import sys
+import requests
 
 
 RESERVED_CHARS = "<>:\"/\\|?*[];=%&"
 
 
 def fs_friendly(filename):
-    '''Removes illegal characters from titles, such as Questionmarks.
+    """Removes illegal characters from titles, such as Questionmarks.
       that prevent writing filenames under windows.
       See: https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
-    '''
+    """
     filename = filename.replace(' & ', ' and ')
     return ''.join([
         c for
@@ -21,14 +21,7 @@ def fs_friendly(filename):
     ])
 
 
-def add_schema_if_necessary(url):
-    if not url.startswith('http:'):
-        url = 'http:' + url
-    return url
-
-
 class Track(object):
-
     def __init__(self, json):
         self.json = json
         self.binary_data = None
@@ -42,20 +35,18 @@ class Track(object):
         return filename_
 
     def download(self):
-        if self.binary_data is None:
-            url = self.json["file"]["mp3-128"]
-            url = add_schema_if_necessary(url)
-            self.binary_data = requests.get(url).content
+        if self.binary_data:
+            return
+        url = self.json["file"]["mp3-128"]
+        self.binary_data = requests.get(url).content
 
 
 class Album(object):
-
     def __init__(self, artist, title, tracks):
         self.tracks = tracks
         self.artist = artist
         self.title = title
 
-    @property
     def directory(self):
         return os.path.join(
             fs_friendly(self.artist),
@@ -64,7 +55,7 @@ class Album(object):
 
     def download(self):
         print("=========================================")
-        directory = self.directory
+        directory = self.directory()
         print("Starting download: " + directory)
         if not os.path.exists(directory):
             os.makedirs(directory)
@@ -76,8 +67,8 @@ class Album(object):
                 continue
             print("  [downloading " + track.filename() + "]")
             track.download()
-            with open(path, 'wb') as f:
-                f.write(track.binary_data)
+            with open(path, 'wb') as file:
+                file.write(track.binary_data)
         print("=========================================")
 
 
@@ -95,14 +86,12 @@ class Page(object):
         return match.group(field)
 
     def album(self):
-        html = self._text
         artist = self._find(FIELD, 'artist')
         title = self._find(FIELD, 'album_title')
         tracks = self.tracks()
         return Album(artist, title, tracks)
 
     def tracks(self):
-        html = self._text
         raw_json = self._find(TRACK, 'trackinfo')
         json_tracks = json.loads(raw_json)
         return (
